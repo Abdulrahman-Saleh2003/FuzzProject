@@ -1,0 +1,1181 @@
+صديقي بدي منك تعملي يلي قلتلك عليه و تعطيني كود اضعه بكولاب ل يعطني  خرج
+
+صممي كود اضعه ضمن الخلايا يعطني
+
+صديقي ركز معي ركز معي المطلوب احكي عن المشكلة و معانا الشعب و ضرورة عمل نظام احترافي فزي لوجيك ++اشرح الخلايا و المتغيرات الدخل و الخرج و اهم عشرة رول
+
+1. مقدمة المشكلة: معاناة الشعب وضرورة النظام (Problem Statement)
+
+"تعاني الشبكة الكهربائية في سوريا من ضغوط هائلة ناتجة عن فجوة كبيرة بين العرض والطلب، مما أدى إلى فرض نظام تقنين قاسٍ. يواجه المواطن السوري تحدي إدارة مصادر طاقة متعددة (طاقة شمسية، بطاريات، شبكة حكومية) في آن واحد، مع تباين حاد في توفرها وتكلفة استهلاكها. إن الاعتماد على التحكم اليدوي أو الأنظمة التقليدية يؤدي إلى استنزاف سريع للبطاريات، فواتير طاقة باهظة عند تجاوز شرائح الاستهلاك، وانقطاعات مفاجئة للأحمال الأساسية. من هنا، برزت الحاجة الملحة لنظام خبير يعتمد على المنطق الضبابي (Fuzzy Logic)، ليكون بمثابة "عقل إلكتروني" يتخذ قرارات ذكية ومستقلة توازن بين الحفاظ على عمر البطارية، ترشيد الفاتورة المالية، وتأمين استمرارية الطاقة للأحمال الضرورية."
+
+2. شرح المدخلات والمخرجات (Variables Definition)
+
+يتكون النظام من 5 مدخلات و3 مخرجات رئيسية، تم تصميمها لتمثيل الحالة التشغيلية للمنزل بدقة:
+
+أولاً: متغيرات الدخل (Input Variables):
+
+Solar Production (إنتاج الطاقة الشمسية): يقيس نسبة التوليد اللحظي للألواح (من 0% إلى 100%).
+
+Battery SoC (مستوى شحن البطارية): يعكس الحالة الفيزيائية للطاقة المخزنة (من فارغ 0% إلى ممتلئ 100%).
+
+Grid Status (استقرار الشبكة): يحدد جودة تيار الشبكة (من مقطوع 0% إلى مستقر 100%).
+
+Cumulative Consumption (الاستهلاك التراكمي): مؤشر مالي يراقب الفاتورة (من شريحة مدعومة إلى شريحة غالية/خطرة).
+
+House Demand (حمل المنزل): يقيس الطلب الفعلي للأحمال (من أساسيات إلى رفاهية).
+
+ثانياً: متغيرات الخرج (Output Variables):
+
+Grid Dependency: تحديد نسبة الاعتماد على الشبكة الحكومية.
+
+Battery Dependency: تحديد مدى سحب الطاقة من البطاريات.
+
+Load Control: التحكم بذكاء في الأحمال (تشغيل/فصل).
+
+3. أهم 10 قواعد في النظام (The Rule Base)
+
+هذه القواعد تمثل "جوهر الذكاء" في مشروعك:
+
+مالقاعدة (Rule)المنطق التشغيلي (النتيجة)1شمس عالية + بطارية ممتلئةتشغيل كامل للمنزل (مجاني).2بطارية فارغة + شمس منعدمةتقليص للأحمال (أساسيات فقط).3فاتورة رخيصة + شبكة مستقرةشحن البطارية + تشغيل كامل للرفاهية.4شريحة غالية + طلب عالٍكبح أحمال الرفاهية لحماية الميزانية.5بطارية فارغة + طلب ثقيلفصل الأحمال الثقيلة لحماية البطارية فيزيائياً.6انقطاع الكهرباء + بطارية ممتلئةتفريغ البطارية للأحمال الثقيلة.7شمس ممتازة + فاتورة خطرةفصل الشبكة والاعتماد الكلي على الطاقة الشمسية.8شمس ضعيفة + بطارية فارغة + شبكة ضعيفةشحن طوارئ بطيء (أساسيات فقط).9ليل + بطارية فارغة + شريحة غاليةاعتماد إجباري على الشبكة (أدنى سحب).10وفرة كاملة (شمس + بطارية + شبكة)تشغيل ذكي يوازن بين استدامة البطارية والتكلفة.
+
+import numpy as np
+
+import skfuzzy as fuzz
+
+from skfuzzy import control as ctrl
+
+
+
+%matplotlib inline
+
+import matplotlib.pyplot as plt
+
+import pandas as pd
+
+from IPython.display import display, HTML
+
+
+
+print("Fuzzy Logic libraries imported successfully!")
+
+
+
+# Section 1: Fuzzy Expert System for Smart Home Energy Management in Syria
+
+
+
+## 1. Problem Statement & Context
+
+Syria’s electrical grid faces severe infrastructure challenges, resulting in strict and unpredictable rationing schedules (blackouts). To adapt, Syrian households heavily rely on alternative energy sources, primarily localized photovoltaic (PV) solar systems and battery storage units.
+
+
+
+Additionally, the Syrian Ministry of Electricity employs a progressive tariff system where electricity prices increase drastically once a household's monthly cumulative consumption surpasses the **500 kWh** threshold (moving from heavily subsidized tiers to non-subsidized, expensive tiers).
+
+
+
+### The Proposed Solution
+
+This project implements a **Fuzzy Expert System** using `scikit-fuzzy` to dynamically manage a smart home's energy allocation. The system continuously evaluates 5 real-world environmental and economic inputs to make 3 critical automated decisions:
+
+1. **Grid Dependency:** To what extent should the house rely on or draw power from the government grid (balancing price vs. availability).
+
+2. **Battery Dependency:** How much energy should be drawn from the battery bank without compromising its lifespan.
+
+3. **Load Control (Appliance Automation):** Which categories of home appliances are permitted to run at any given moment (prioritizing essential devices over luxuries during high-tariff or low-source periods).
+
+
+
+---
+
+
+
+## 2. System Architecture: Inputs & Fuzzy Sets
+
+
+
+The system processes **5 distinct input variables**, expanded into 4 explicit fuzzy sets each, mapping the complex Syrian energy reality into accurate membership transitions.
+
+
+
+### Input Variables & Fuzzy Sets Table
+
+
+
+| Input Variable (Antecedent) | Range / Domain | Fuzzy Set (Linguistic Term) | Brief Operational Definition |
+
+| :--- | :--- | :--- | :--- |
+
+| **Battery State of Charge (`battery_soc`)** | $0\% - 100\%$ | `empty` <br> `low` <br> `medium` <br> `full` | Battery is dangerously low ($<25\%$). <br> Battery is low but safe for emergencies ($20\%-55\%$). <br> Normal safe operating capacity ($45\%-80\%$). <br> Fully charged, ready for heavy discharge ($>75\%$). |
+
+| **Solar Production (`solar_production`)** | $0\% - 100\%$ | `none` <br> `low` <br> `medium` <br> `high` | Nighttime or thick cloud cover ($<15\%$). <br> Early morning/sunset or partial shading ($10\%-50\%$). <br> Standard clear daylight production ($40\%-85\%$). <br> Peak summer midday generation ($>75\%$). |
+
+| **Government Grid Status (`grid_status`)** | $0\% - 100\%$ | `off` <br> `very_weak` <br> `weak` <br> `stable` | Total blackout/rationing period ($<15\%$). <br> Unstable grid voltage or transition period ($10\%-45\%$). <br> Standard rationing window active ($35\%-75\%$). <br> Continuous connection (Industrial or exempted lines) ($>70\%$). |
+
+| **Cumulative Monthly Consumption (`cum_consumption`)** | $0 - 1000\text{ kWh}$ | `subsidized` <br> `normal` <br> `borderline` <br> `expensive` | Low usage tier, cheapest government rates ($0-400\text{ kWh}$). <br> Moderate usage approaching the cap ($350-500\text{ kWh}$). <br> **The critical 500 kWh threshold window** ($480-650\text{ kWh}$). <br> Exceeded 500 kWh; highly expensive tariff active ($>600\text{ kWh}$). |
+
+| **Current House Demand (`house_demand`)** | $0\% - 100\%$ | `basic` <br> `light_appl` <br> `heavy_appl` <br> `luxury` | Critical survival load only (LED lights, Router, Chargers) ($<30\%$). <br> Standard appliances active (Refrigerator, TV, Fans) ($25\%-60\%$). <br> Medium-heavy power devices running (Washing machine, Water pump) ($50\%-85\%$). <br> Maximum load demand (Air conditioners, Electric water heaters) ($>80\%$). |
+
+
+
+---
+
+
+
+## 3. System Architecture: Outputs & Fuzzy Sets
+
+
+
+The system coordinates **3 distinct output decisions** to optimize cost, battery health, and resident comfort.
+
+
+
+### Output Variables & Fuzzy Sets Table
+
+
+
+| Output Variable (Consequent) | Range / Domain | Fuzzy Set (Linguistic Term) | Brief Actionable Meaning |
+
+| :--- | :--- | :--- | :--- |
+
+| **Battery Dependency (`battery_dependency`)** | $0\% - 100\%$ | `none` <br> `low` <br> `medium` <br> `high` | Completely isolate battery (Charge or bypass). <br> Draw minimal current for critical operations. <br> Balanced mixed-power configuration. <br> Maximize discharge to sustain the entire load independently. |
+
+| **Grid Dependency (`grid_dependency`)** | $0\% - 100\%$ | `none` <br> `low` <br> `medium` <br> `high` | Disconnect from grid (Zero grid import / Islanded mode). <br> Limit grid import to prevent passing into expensive brackets. <br> Draw partial grid power alongside solar. <br> Maximize grid drawing to support house loads and charge batteries. |
+
+| **Load Control / Permitted Appliances (`load_control`)** | $0\% - 100\%$ | `basics_only` <br> `light_loads` <br> `heavy_loads` <br> `full_house` | **Emergency Mode:** Shed all loads except LED lighting and Router. <br> **Eco Mode:** Allow basic loads + Refrigerator and TV. <br> **Comfort Mode:** Allow light loads + Washing Machine or Water Pump. <br> **Full Mode:** Run everything safely, including Air Conditioning. |
+
+
+
+---
+
+
+
+## 4. Input Configuration Diagram (Mathematical Overlaps)
+
+
+
+The following ASCII graph illustrates how the system's inputs transition dynamically, with special emphasis on how the **Cumulative Monthly Consumption** changes its fuzzy behavior precisely around the **500 kWh** economic turning point:
+
+import numpy as np
+
+import skfuzzy as fuzz
+
+from skfuzzy import control as ctrl
+
+
+
+
+
+soc_range = np.arange(0, 101, 1)          # البطارية (0-100%)
+
+solar_range = np.arange(0, 101, 1)        # الشمس (0-100%)
+
+grid_range = np.arange(0, 101, 1)         # الشبكة الحكومية (0-100%)
+
+consumption_range = np.arange(0, 1001, 1) # الاستهلاك المتراكم الشهري (0-1000 kWh)
+
+demand_range = np.arange(0, 101, 1)       # طلب البيت الحالي (0-100%)
+
+output_range = np.arange(0, 101, 1)       # نطاق المخرجات الموحد (0-100%)
+
+battery_soc      = ctrl.Antecedent(soc_range, 'battery_soc')
+
+solar_production = ctrl.Antecedent(solar_range, 'solar_production')
+
+grid_status      = ctrl.Antecedent(grid_range, 'grid_status')
+
+cum_consumption  = ctrl.Antecedent(consumption_range, 'cum_consumption')
+
+house_demand     = ctrl.Antecedent(demand_range, 'house_demand')
+
+
+
+
+
+battery_dependency = ctrl.Consequent(output_range, 'battery_dependency')
+
+grid_dependency    = ctrl.Consequent(output_range, 'grid_dependency')
+
+load_control       = ctrl.Consequent(output_range, 'load_control')
+
+
+
+battery_soc['empty']  = fuzz.trapmf(soc_range, [0, 0, 15, 25])
+
+battery_soc['low']    = fuzz.trimf(soc_range, [20, 35, 55])
+
+battery_soc['medium'] = fuzz.trimf(soc_range, [45, 65, 80])
+
+battery_soc['full']   = fuzz.trapmf(soc_range, [75, 90, 100, 100])
+
+
+
+# دالات الطاقة الشمسية (توسيع إلى 4 حالات)
+
+solar_production['none']   = fuzz.trapmf(solar_range, [0, 0, 5, 15])
+
+solar_production['low']    = fuzz.trimf(solar_range, [10, 30, 50])
+
+solar_production['medium'] = fuzz.trimf(solar_range, [40, 65, 85])
+
+solar_production['high']   = fuzz.trapmf(solar_range, [75, 90, 100, 100])
+
+
+
+# دالات الشبكة الحكومية (توسيع إلى 4 حالات تحاكي بدقة واقع التقنين والوصل)
+
+grid_status['off']       = fuzz.trapmf(grid_range, [0, 0, 5, 15])        # مقطوعة تماماً
+
+grid_status['very_weak'] = fuzz.trimf(grid_range, [10, 25, 45])         # تأتي نبضات أو كهرباء غير مستقرة
+
+grid_status['weak']      = fuzz.trimf(grid_range, [35, 55, 75])         # تقنين عادي (ساعة وصل مثلاً بجودة متوسطة)
+
+grid_status['stable']    = fuzz.trapmf(grid_range, [70, 85, 100, 100])   # خطوط معفاة من التقنين أو وصل مستقر
+
+
+
+# دالات الاستهلاك المتراكم (توسيع إلى 4 حالات لتغطية شرائح الفاتورة وحاجز الـ 500 بدقة)
+
+cum_consumption['subsidized'] = fuzz.trapmf(consumption_range, [0, 0, 250, 400])     # شريحة رخيصة جداً
+
+cum_consumption['normal']     = fuzz.trimf(consumption_range, [350, 450, 500])       # شريحة متوسطة تحت حاجز الدعم
+
+cum_consumption['borderline'] = fuzz.trimf(consumption_range, [480, 530, 650])       # شريحة الخطر حول الـ 500 kWh
+
+cum_consumption['expensive']  = fuzz.trapmf(consumption_range, [600, 750, 1000, 1000]) # شريحة التجاري والرفاهية الغالية
+
+
+
+# طبيعة استهلاك البيت الحالي (توسيع إلى 4 حالات لتغطية كل أنواع الأجهزة)
+
+house_demand['basic']      = fuzz.trapmf(demand_range, [0, 0, 15, 30])     # إنارة، راوتر، شواحن
+
+house_demand['light_appl']  = fuzz.trimf(demand_range, [25, 45, 60])        # براد، تلفزيون، مروحة
+
+house_demand['heavy_appl']  = fuzz.trimf(demand_range, [50, 70, 85])        # غسالة، مضخة مياه، مكواة
+
+house_demand['luxury']      = fuzz.trapmf(demand_range, [80, 90, 100, 100])   # مكيفات، سخانات مياه كهربائية
+
+
+
+# ==============================================================================
+
+# 4. دالات الانتماء للمخرجات بعد التوسيع (Outputs)
+
+# ==============================================================================
+
+
+
+# مخرج 1: نسبة الاعتماد على البطاريات (توسيع إلى 4 حالات)
+
+battery_dependency['none']   = fuzz.trapmf(output_range, [0, 0, 5, 15])
+
+battery_dependency['low']    = fuzz.trimf(output_range, [10, 35, 55])
+
+battery_dependency['medium'] = fuzz.trimf(output_range, [45, 70, 85])
+
+battery_dependency['high']   = fuzz.trapmf(output_range, [75, 90, 100, 100])
+
+
+
+# مخرج 2: نسبة الاعتماد على الطاقة الحكومية (توسيع إلى 4 حالات)
+
+grid_dependency['none']   = fuzz.trapmf(output_range, [0, 0, 5, 15])
+
+grid_dependency['low']    = fuzz.trimf(output_range, [10, 35, 55])
+
+grid_dependency['medium'] = fuzz.trimf(output_range, [45, 70, 85])
+
+grid_dependency['high']   = fuzz.trapmf(output_range, [75, 90, 100, 100])
+
+
+
+# مخرج 3: شو بدي شغل - طبيعة الأحمال المسموحة (توسيع كامل إلى 4 حالات واضحة جداً)
+
+load_control['basics_only']   = fuzz.trapmf(output_range, [0, 0, 20, 35])     # ليد وراوتر فقط
+
+load_control['light_loads']   = fuzz.trimf(output_range, [25, 45, 65])        # إضافة البراد والتلفزيون
+
+load_control['heavy_loads']   = fuzz.trimf(output_range, [55, 75, 90])        # تشغيل الغسالة أو المضخات
+
+load_control['full_house']    = fuzz.trapmf(output_range, [85, 95, 100, 100])  # تشغيل المكيفات وكامل الرفاهية
+
+fig, ax = plt.subplots(figsize=(12, 8))
+
+ax.set_facecolor('#f8f9fa')
+
+
+
+inputs = [
+
+    "Battery SoC\n(empty, low, medium, full)",
+
+    "Solar Production\n(none, low, medium, high)",
+
+    "Grid Status\n(off, very_weak, weak, stable)",
+
+    "Cumulative Consumption\n(subsidized, normal, borderline, expensive)",
+
+    "Current House Demand\n(basic, light, heavy, luxury)"
+
+]
+
+
+
+outputs = [
+
+    "Battery Dependency\n(none, low, medium, high)",
+
+    "Grid Dependency\n(none, low, medium, high)",
+
+    "Load Control\n(basics, light, heavy, full)"
+
+]
+
+
+
+y_inputs = np.linspace(7, 1, 5)
+
+for i, inp in enumerate(inputs):
+
+    ax.text(1.5, y_inputs[i], inp, bbox=dict(boxstyle="round,pad=0.6", facecolor='#e3f2fd', edgecolor='#1e88e5', lw=2),
+
+            ha="center", va="center", fontsize=10, fontweight='bold', color='#0d47a1')
+
+
+
+ax.text(6, 4, "Fuzzy Inference Engine\n(Mamdani System)\n\n[ Rule Base ]\n5 Inputs -> 3 Outputs",
+
+        bbox=dict(boxstyle="round,pad=1.5", facecolor='#fff3e0', edgecolor='#fb8c00', lw=2.5),
+
+        ha="center", va="center", fontsize=12, fontweight='bold', color='#e65100')
+
+
+
+y_outputs = np.linspace(6, 2, 3)
+
+for i, outp in enumerate(outputs):
+
+    ax.text(10.5, y_outputs[i], outp, bbox=dict(boxstyle="round,pad=0.6", facecolor='#e8f5e9', edgecolor='#43a047', lw=2),
+
+            ha="center", va="center", fontsize=10, fontweight='bold', color='#1b5e20')
+
+
+
+for y_in in y_inputs:
+
+    ax.annotate('', xy=(4.2, 4), xytext=(2.7, y_in),
+
+                arrowprops=dict(arrowstyle="->", color='#1e88e5', lw=1.5, connectionstyle="arc3,rad=0.1"))
+
+
+
+for y_out in y_outputs:
+
+    ax.annotate('', xy=(9.1, y_out), xytext=(7.8, 4),
+
+                arrowprops=dict(arrowstyle="->", color='#43a047', lw=1.5, connectionstyle="arc3,rad=-0.1"))
+
+
+
+ax.set_xlim(0, 12)
+
+ax.set_ylim(0, 8)
+
+ax.axis('off')
+
+plt.title("Smart Home Energy Management - Fuzzy Logic System Architecture", fontsize=14, fontweight='bold', pad=20, color='#37474f')
+
+
+
+plt.tight_layout()
+
+plt.savefig('Fuzzy_System_Architecture.png', dpi=300)
+
+plt.show()
+
+
+
+print(" Fuzzy_System_Architecture.png")
+
+
+
+battery_dependency.view()
+
+grid_dependency   .view()
+
+load_control     .view()
+
+import matplotlib.pyplot as plt
+
+
+
+# List of your input objects and their custom display titles
+
+inputs_list = [
+
+
+
+
+
+    (battery_soc, 'Battery SoC'),
+
+    (solar_production, 'Solar Production'),
+
+    (grid_status, 'Grid Status'),
+
+    (cum_consumption, 'Cumulative Consumption'),
+
+    (house_demand, 'House Demand')
+
+]
+
+
+
+# Create a figure with a 2x3 grid of subplots
+
+fig, axes = plt.subplots(2, 3, figsize=(16, 9))
+
+axes = axes.flatten()
+
+
+
+# Loop through each variable and plot its membership functions dynamically
+
+for i, (var, title) in enumerate(inputs_list):
+
+    ax = axes[i]
+
+
+
+    # Plot each fuzzy set term
+
+    for term_name, term_obj in var.terms.items():
+
+        ax.plot(var.universe, term_obj.mf, label=term_name, linewidth=2)
+
+
+
+    ax.set_title(title, fontsize=12, fontweight='bold')
+
+
+
+    # DYNAMIC FIX: Automatically scale X-axis based on the variable's actual range
+
+    ax.set_xlim([var.universe.min(), var.universe.max()])
+
+
+
+    ax.set_ylim([0, 1.05])
+
+    ax.grid(True, linestyle='--', alpha=0.5)
+
+    ax.legend(loc='upper right', fontsize=9)
+
+
+
+# Hide the 6th empty subplot since we only have 5 inputs
+
+axes[5].axis('off')
+
+
+
+# Clear overlapping labels and display the clean dashboard
+
+plt.tight_layout()
+
+plt.show()
+
+
+
+Rule1 = ctrl.Rule(
+
+    solar_production['none'] & battery_soc['empty'],
+
+    [battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule2: الشمس في ذروتها والبطارية ممتلئة -> تشغيل المنزل بالكامل مجاناً فوراً
+
+Rule2 = ctrl.Rule(
+
+    solar_production['high'] & battery_soc['full'],
+
+    [battery_dependency['high'], load_control['full_house']]
+
+)
+
+
+
+# Rule3: استغلال شريحة الدعم الرخيصة عند استقرار الشبكة لشحن البطاريات وتشغيل الرفاهية
+
+Rule3 = ctrl.Rule(
+
+    cum_consumption['subsidized'] & grid_status['stable'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['full_house']]
+
+)
+
+
+
+# Rule4: الفاتورة دخلت الشريحة الغالية جداً والطلب عالي -> كبح أحمال الرفاهية فوراً لحماية الميزانية
+
+Rule4 = ctrl.Rule(
+
+    cum_consumption['expensive'] & house_demand['luxury'],
+
+    [grid_dependency['low'], load_control['light_loads']]
+
+)
+
+
+
+# Rule5: البطارية فارغة تماماً والطلب عالي -> فصل الأحمال الثقيلة لحماية البطارية من الانهيار الفيزيائي
+
+Rule5 = ctrl.Rule(
+
+    battery_soc['empty'] & house_demand['heavy_appl'],
+
+    [battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule6: الشمس غائبة تماماً (ليل) والطلب في ذروة الرفاهية -> تشغيل متوازن بحسب المتوفر
+
+Rule6 = ctrl.Rule(
+
+    solar_production['none'] & house_demand['luxury'],
+
+    [battery_dependency['medium'], load_control['light_loads']]
+
+)
+
+
+
+# Rule7: استهلاك رخيص جداً والبطارية منخفضة -> فرصة ذهبية لشحن البطارية من الشبكة
+
+Rule7 = ctrl.Rule(
+
+    cum_consumption['subsidized'] & battery_soc['low'],
+
+    [grid_dependency['high'], load_control['light_loads']]
+
+)
+
+
+
+# Rule8: الفاتورة في الشريحة الغالية والكهرباء مقطوعة -> وضع اقتصادي حرج وتوفير مطلق
+
+Rule8 = ctrl.Rule(
+
+    cum_consumption['expensive'] & grid_status['off'],
+
+    [grid_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+
+
+# ------------------------------------------------------------------------------
+
+# المجموعة 2: قواعد ذات دخل ثلاثي (3 Inputs) - 10 قواعد
+
+# ------------------------------------------------------------------------------
+
+
+
+# Rule9: انقطاع الكهرباء ليلاً والبطارية منخفضة -> تشغيل الأساسيات المطلقة (إنارة وراوتر)
+
+Rule9 = ctrl.Rule(
+
+    grid_status['off'] & solar_production['none'] & battery_soc['low'],
+
+    [battery_dependency['low'], load_control['basics_only']]
+
+)
+
+
+
+# Rule10: انقطاع الكهرباء ليلاً والبطارية ممتلئة -> الاعتماد الكامل على تفريغ البطارية للأحمال الثقيلة
+
+Rule10 = ctrl.Rule(
+
+    grid_status['off'] & solar_production['none'] & battery_soc['full'],
+
+    [grid_dependency['none'], battery_dependency['high'], load_control['heavy_loads']]
+
+)
+
+
+
+# Rule11: غياب الكهرباء نهاراً مع شمس ممتازة وبطارية فارغة -> توجيه الإنتاج الشمسي للأحمال الخفيفة وشحن البطارية
+
+Rule11 = ctrl.Rule(
+
+    grid_status['off'] & solar_production['high'] & battery_soc['empty'],
+
+    [grid_dependency['none'], battery_dependency['none'], load_control['light_loads']]
+
+)
+
+
+
+# Rule12: الفاتورة غالية والكهرباء متوفرة والشمس ممتازة -> اعتماد شمسي كامل وتجميد السحب المالي من الشبكة
+
+Rule12 = ctrl.Rule(
+
+    cum_consumption['expensive'] & grid_status['stable'] & solar_production['high'],
+
+    [grid_dependency['none'], load_control['heavy_loads']]
+
+)
+
+
+
+# Rule13: الكهرباء ضعيفة جداً، البطارية فارغة، ولا يوجد شمس -> سحب طوارئ أدنى لحماية الأجهزة والتشغيل الأساسي
+
+Rule13 = ctrl.Rule(
+
+    grid_status['very_weak'] & battery_soc['empty'] & solar_production['none'],
+
+    [grid_dependency['low'], battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule14: تقنين عادي (شبكة ضعيفة) مع شمس متوسطة وبطارية منخفضة -> دمج الشبكة والشمس معاً لتشغيل أحمال خفيفة
+
+Rule14 = ctrl.Rule(
+
+    grid_status['weak'] & solar_production['medium'] & battery_soc['low'],
+
+    [grid_dependency['medium'], battery_dependency['low'], load_control['light_loads']]
+
+)
+
+
+
+# Rule15: الشبكة مستقرة والبطارية فارغة والطلب خفيف -> استغلال استقرار الجهد للشحن السريع والآمن للبطاريات
+
+Rule15 = ctrl.Rule(
+
+    grid_status['stable'] & battery_soc['empty'] & house_demand['basic'],
+
+    [grid_dependency['high'], load_control['basics_only']]
+
+)
+
+
+
+# Rule16: يوم غائم والكهرباء مقطوعة تماماً والالبطارية ممتلئة -> تلبية أحمال المنزل الخفيفة بحذر من البطارية
+
+Rule16 = ctrl.Rule(
+
+    solar_production['low'] & grid_status['off'] & battery_soc['full'],
+
+    [grid_dependency['none'], battery_dependency['high'], load_control['light_loads']]
+
+)
+
+
+
+# Rule17: طلب أحمال ثقيلة والبطارية ممتلئة والشمس في الذروة -> تشغيل هندسي مستقل وآمن بالكامل من الطاقة البديلة
+
+Rule17 = ctrl.Rule(
+
+    house_demand['heavy_appl'] & battery_soc['full'] & solar_production['high'],
+
+    [battery_dependency['high'], load_control['heavy_loads']]
+
+)
+
+
+
+# Rule18: الكهرباء مستقرة والبطارية متوسطة وطلب المنزل خفيف -> الشبكة تغذي المنزل والبطارية مستقرة
+
+Rule18 = ctrl.Rule(
+
+    grid_status['stable'] & battery_soc['medium'] & house_demand['light_appl'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['light_loads']]
+
+)
+
+
+
+
+
+# ------------------------------------------------------------------------------
+
+# المجموعة 3: قواعد ذات دخل رباعي (4 Inputs) - 12 قاعدة للسيناريوهات المركبة
+
+# ------------------------------------------------------------------------------
+
+
+
+# Rule19: الفاتورة تقترب من حاجز الخطر (500 kWh) والطلب عالي والشمس والبطارية متوسطة -> تقييد ذكي لحماية الفاتورة
+
+Rule19 = ctrl.Rule(
+
+    cum_consumption['borderline'] & house_demand['heavy_appl'] & solar_production['medium'] & battery_soc['medium'],
+
+    [grid_dependency['low'], battery_dependency['medium'], load_control['light_loads']]
+
+)
+
+
+
+# Rule20: الفاتورة مدعومة والكهرباء مستقرة والبطارية ممتلئة والطلب ثقيل -> سحب كامل من الشبكة لتوفير دورات شحن البطارية
+
+Rule20 = ctrl.Rule(
+
+    cum_consumption['subsidized'] & grid_status['stable'] & battery_soc['full'] & house_demand['heavy_appl'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['heavy_loads']]
+
+)
+
+
+
+# Rule21: شتاء غائم، الكهرباء مقطوعة، البطارية منخفضة، والمنزل يطلب رفاهية -> كبح حازم للرفاهية ومنع تشغيلها
+
+Rule21 = ctrl.Rule(
+
+    solar_production['low'] & grid_status['off'] & battery_soc['low'] & house_demand['luxury'],
+
+    [grid_dependency['none'], battery_dependency['medium'], load_control['basics_only']]
+
+)
+
+
+
+# Rule22: حالة التعادل والشراكة الكاملة للمصادر عند وجود تعرفة عادية واستقرارات متوسطة للشبكة والشمس والبطارية
+
+Rule22 = ctrl.Rule(
+
+    battery_soc['medium'] & solar_production['medium'] & grid_status['weak'] & cum_consumption['normal'],
+
+    [grid_dependency['medium'], battery_dependency['medium'], load_control['light_loads']]
+
+)
+
+
+
+# Rule23: الفاتورة تجاوزت الـ 500 kWh والمنزل يطلب مكيفات ليلاً والبطارية ممتلئة -> تفريغ البطارية لحماية الفاتورة التجارية
+
+Rule23 = ctrl.Rule(
+
+    cum_consumption['expensive'] & house_demand['luxury'] & solar_production['none'] & battery_soc['full'],
+
+    [grid_dependency['none'], battery_dependency['high'], load_control['light_loads']]
+
+)
+
+
+
+# Rule24: الاستهلاك رخيص، الكهرباء جاءت ضعيفة جداً، الشمس منخفضة، والبطارية فارغة -> شحن طوارئ بطيء وحماية الأحمال
+
+Rule24 = ctrl.Rule(
+
+    cum_consumption['subsidized'] & grid_status['very_weak'] & solar_production['low'] & battery_soc['empty'],
+
+    [grid_dependency['low'], battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule25: الشمس ممتازة، الشبكة مستقرة، الاستهلاك شارف على الخطر، والبطارية متوسطة -> فصل الشبكة فوراً والاعتماد على الشمس
+
+Rule25 = ctrl.Rule(
+
+    solar_production['high'] & grid_status['stable'] & cum_consumption['borderline'] & battery_soc['medium'],
+
+    [grid_dependency['none'], battery_dependency['none'], load_control['heavy_loads']]
+
+)
+
+
+
+# Rule26: غيوم كثيفة، شبكة ضعيفة جداً، استهلاك عادي، وبطارية ممتلئة -> تغذية المنزل من البطارية بدلاً من الشبكة المتذبذبة
+
+Rule26 = ctrl.Rule(
+
+    solar_production['none'] & grid_status['very_weak'] & cum_consumption['normal'] & battery_soc['full'],
+
+    [grid_dependency['none'], battery_dependency['high'], load_control['light_loads']]
+
+)
+
+
+
+# Rule27: الاستهلاك في الشريحة العادية، الكهرباء مقطوعة، الشمس متوسطة، والبطارية منخفضة -> تشغيل اقتصادي من الشمس والبطارية معاً
+
+Rule27 = ctrl.Rule(
+
+    cum_consumption['normal'] & grid_status['off'] & solar_production['medium'] & battery_soc['low'],
+
+    [grid_dependency['none'], battery_dependency['low'], load_control['light_loads']]
+
+)
+
+
+
+# Rule28: شمس ممتازة، شبكة مستقرة، استهلاك رخيص، وبطارية فارغة -> شحن البطارية بأقصى سرعة من الشبكة والشمس معاً لتأمين المخزون
+
+Rule28 = ctrl.Rule(
+
+    solar_production['high'] & grid_status['stable'] & cum_consumption['subsidized'] & battery_soc['empty'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['light_loads']]
+
+)
+
+
+
+# Rule29: الفاتورة باهظة (expensive)، الكهرباء ضعيفة، الشمس متوسطة، والبطارية متوسطة -> النظام يعتمد على الشمس والبطارية ويفصل الشبكة المكلفة
+
+Rule29 = ctrl.Rule(
+
+    cum_consumption['expensive'] & grid_status['weak'] & solar_production['medium'] & battery_soc['medium'],
+
+    [grid_dependency['none'], battery_dependency['medium'], load_control['light_loads']]
+
+)
+
+
+
+# Rule30: استهلاك شارف على الخطر (borderline)، الكهرباء مقطوعة، الشمس غائبة، والبطارية ممتلئة -> تلبية الأحمال الخفيفة ريثما تتحسن الظروف
+
+Rule30 = ctrl.Rule(
+
+    cum_consumption['borderline'] & grid_status['off'] & solar_production['none'] & battery_soc['full'],
+
+    [grid_dependency['none'], battery_dependency['high'], load_control['light_loads']]
+
+)
+
+
+
+
+
+# Rule31: دخل خماسي كامل -> حالة الوفرة المطلقة والاقتصادية القصوى (تشغيل المنزل والرفاهية بأمان)
+
+Rule31 = ctrl.Rule(
+
+    battery_soc['full'] & solar_production['high'] & grid_status['stable'] & cum_consumption['subsidized'] & house_demand['luxury'],
+
+    [grid_dependency['low'], battery_dependency['high'], load_control['full_house']]
+
+)
+
+
+
+# Rule32: دخل خماسي كامل -> حالة الطوارئ القصوى المركبة (تصفير المصادر + شتاء + شريحة غالية + طلب عالي)
+
+Rule32 = ctrl.Rule(
+
+    battery_soc['empty'] & solar_production['none'] & grid_status['off'] & cum_consumption['expensive'] & house_demand['heavy_appl'],
+
+    [grid_dependency['none'], battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule33: دخل خماسي كامل -> حالة التشغيل الذكي لحماية حاجز الـ 500 kWh عند استقرار المنظومة نهاراً
+
+Rule33 = ctrl.Rule(
+
+    battery_soc['medium'] & solar_production['medium'] & grid_status['weak'] & cum_consumption['borderline'] & house_demand['light_appl'],
+
+    [grid_dependency['low'], battery_dependency['medium'], load_control['light_loads']]
+
+)
+
+
+
+# Rule 34: حماية البطارية المطلقة عند الانعدام اللحظي (حتى لو كانت الشمس قوية والعداد مرتفع)
+
+Rule34 = ctrl.Rule(
+
+    battery_soc['empty'] & solar_production['high'] & grid_status['stable'] & cum_consumption['expensive'],
+
+    [grid_dependency['high'], battery_dependency['low'], load_control['light_loads']]
+
+)
+
+
+
+# Rule 35: حالة الاستهلاك المرتفع جداً وشحن البطارية صفر مع شبكة متوفرة أو ضعيفة
+
+# (ملاحظة: مكتبة skfuzzy لا تدعم عامل | (Or) مباشرة بين الأقواس داخل القاعدة، لذا فصلناها لقاعدتين لضمان استقرار حساباتك)
+
+Rule35_A = ctrl.Rule(
+
+    battery_soc['empty'] & solar_production['high'] & grid_status['stable'] & cum_consumption['expensive'],
+
+    [grid_dependency['high'], battery_dependency['low'], load_control['light_loads']]
+
+)
+
+
+
+Rule35_B = ctrl.Rule(
+
+    battery_soc['empty'] & solar_production['high'] & grid_status['weak'] & cum_consumption['expensive'],
+
+    [grid_dependency['high'], battery_dependency['low'], load_control['light_loads']]
+
+)
+
+
+
+# Rule 36: ليل + بطارية صفر + عداد غالي + شبكة متوفرة -> الاعتماد الكامل على الشبكة إجبارياً لحماية المنظومة
+
+Rule36 = ctrl.Rule(
+
+    battery_soc['empty'] & solar_production['none'] & grid_status['stable'] & cum_consumption['expensive'],
+
+    [grid_dependency['high'], battery_dependency['low'], load_control['basics_only']]
+
+)
+
+# ------------------------------------------------------------------------------
+
+# المجموعة 4: قواعد الطوارئ المركبة المحدثة (حماية الحواف الحادة والانهيار الفيزيائي)
+
+# ------------------------------------------------------------------------------
+
+
+
+# Rule 37: دخل خماسي كامل -> طوارئ النهار (البطارية صفر + العداد في أقصى الشريحة الغالية + شمس ممتازة + طلب ثقيل + شبكة مستقرة)
+
+# النتيجة هندسياً: الاعتماد الكامل على الشبكة لحماية البطارية وتحويل الحمل لتشغيل الأساسيات فقط حركياً لتقليل الفاتورة
+
+Rule37 = ctrl.Rule(
+
+    battery_soc['empty'] &
+
+    cum_consumption['expensive'] &
+
+    solar_production['high'] &
+
+    grid_status['stable'] &
+
+    house_demand['heavy_appl'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule 38: دخل خماسي كامل -> طوارئ ليلية حاسمة (البطارية صفر + العداد قريب الألف + ليل + طلب رفاهية + شبكة مستقرة)
+
+# النتيجة هندسياً: كسر الحظر الاقتصادي والاعتماد الإجباري الكامل على الدعم الحكومي لإنعاش المنظومة وتشغيل الأساسيات المطلقة فقط
+
+Rule38 = ctrl.Rule(
+
+    battery_soc['empty'] &
+
+    cum_consumption['expensive'] &
+
+    solar_production['none'] &
+
+    grid_status['stable'] &
+
+    house_demand['luxury'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+# Rule 39: دخل خماسي كامل -> طوارئ التقنين المتذبذب (البطارية صفر + العداد غالي + ليل + طلب متوسط + شبكة ضعيفة)
+
+# النتيجة هندسياً: سحب مقنن من الشبكة المتوفرة الضعيفة مع إبقاء حالة الطوارئ الصارمة داخل المنزل وتشغيل أساسي فقط
+
+Rule39 = ctrl.Rule(
+
+    battery_soc['empty'] &
+
+    cum_consumption['expensive'] &
+
+    solar_production['none'] &
+
+    grid_status['weak'] &
+
+    house_demand['light_appl'],
+
+    [grid_dependency['high'], battery_dependency['none'], load_control['basics_only']]
+
+)
+
+
+
+
+
+
+
+مثل هيك
+
+import os
+
+import datetime
+
+from google.colab import files
+
+
+
+# 1. تثبيت وتحديث مكتبة التعامل مع مستندات الوورد
+
+!pip install python-docx
+
+
+
+import docx
+
+from docx import Document
+
+from docx.shared import Inches, Pt, RGBColor
+
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
+
+from docx.oxml import OxmlElement, parse_xml
+
+from docx.oxml.ns import nsdecls, qn
+
+
+
+def set_cell_background(cell, fill_hex):
+
+    """تلوين خلفية الخلية البرمجية لمحاكاة التصميم الأكاديمي الفاخر"""
+
+    shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_hex}"/>')
+
+    cell._tc.get_or_add_tcPr().append(shading_elm)
+
+
+
+def set_cell_margins(cell, top=140, bottom=140, left=180, right=180):
+
+    """ضبط الهوامش الداخلية للخلايا (Padding) لتبدو الجداول عريضة ومريحة للعين"""
+
+    tcPr = cell._tc.get_or_add_tcPr()
+
+    tcMar = OxmlElement('w:tcMar')
+
+    for m, val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
+
+        node = OxmlElement(f'w:{m}')
+
+        node.set(qn('w:w'), str(val))
+
+        node.set(qn('w:type'), 'dxa')
+
+        tcMar.append(node)
+
+    tcPr.append(tcMar)
+
+
+
+def create_semtos_ultimate_academic_report(filename="SEMTOS_Ultimate_10Pages_Report.docx"):
+
+    doc = Document()
+
+
+
+    # ضبط هوامش الصفحة القياسية (1 إنش من كل جانب)
+
+    for section in doc.sections:
+
+        section.top_margin = Inches(1)
+
+        section.bottom_margin = Inches(1)
+
+        section.left_margin = Inches(1)
+
+        section.right_margin = Inches(1)
+
+
+
+    # إعداد النمط العام للنصوص
+
+    style = doc.styles['Normal']
+
+    font = style.font
+
+    font.name = 'Arial'
+
+    font.size = Pt(11)
+
+    font.color.rgb = RGBColor(0x2D, 0x37, 0x48) # لون رمادي داكن احترافي بدلاً من الأسود الحاد
+
+
+
+    # دالات مساعدة لبناء المكونات المرئية للتصميم الجديد
+
+    def add_custom_h1(text):
+
+        p = doc.add_paragraph()
+
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+        p.paragraph_format.space_before = Pt(26)
+
+        p.paragraph_format.space_after = Pt(12)
+
+        run = p.add_run(text)
+
+        run.font.name = 'Arial'
+
+        run.font.size = Pt(16)
+
+        run.bold = True
+
+        run.font.color.rgb = RGBColor(0x1A, 0x36, 0x5D) # كحلي ملكي داكن للمحاور الرئيسية
+
+        return p
+
+
+
+    def add_custom_h2(text):
+
+        p = doc.add_paragraph()
+
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+        p.paragraph_format.space_before = Pt(18)
+
+        p.paragraph_format.space_after = Pt(6)
+
+        run = p.add_run(text)
+
+        run.font.name = 'Arial'
+
+        run.font.size = Pt(13)
+
+        run.bold = True
+
+        run.font.color.rgb = RGBColor(0x2C, 0x52, 0x82) # الأزرق الفولاذي للمحاور الفرعية
+
+        return p
+
+
+
+    def add_body_p(text, bold_prefix=""):
+
+        p = doc.
